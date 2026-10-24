@@ -7,7 +7,8 @@ Airflow DAG 저장소. 클러스터의 Airflow가 gitSync로 `main` 브랜치의
 ```
 dags/
   common/notify.py              공통 실패 알림 (디스코드 웹훅)
-  ops/                          운영 감시 DAG
+  ops/                          운영 DAG
+    jenkins_cache_cleanup.py
     jenkins_watch.py
   seatflow/                     seatflow 관련 DAG
     seatflow_api_batch.py
@@ -39,6 +40,17 @@ from common.notify import discord_on_failure
 ```
 
 Variable이 없으면 알림만 건너뛰고 태스크 결과에는 영향 없다.
+
+## Jenkins 빌드 캐시 정리 (`jenkins_cache_cleanup`)
+
+매주 일요일 04:00, 노드 3대(`ubuntu`, `worker-node`, `worker-node2`)에 정리 파드를 하나씩 띄워 `/var/cache/jenkins-agent/buildkit-*` 합계가 `limit_gb`(기본 10)를 넘으면 비운다.
+
+- buildkit local 캐시는 오래된 레이어를 스스로 지우지 않아서 계속 커진다. 비운 직후 빌드 1회만 캐시 없이 돈다
+- gradle 캐시는 Gradle이 30일 지난 항목을 스스로 정리해서 건드리지 않는다
+- 최근 60분 안에 캐시가 쓰였으면 빌드 중일 수 있어 그 노드는 건너뛴다
+- 노드별 용량과 삭제 여부는 태스크 로그(`cleanup [0..2]`)에서 확인
+- 지금 바로 비우려면 Trigger → `limit_gb: 1`. 용량만 보려면 큰 값(예: 100)으로 Trigger
+- 노드가 늘면 `NODES` 목록에 추가
 
 ## Jenkins 장시간 대기/실행 알림 (`jenkins_watch`)
 
