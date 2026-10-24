@@ -1,0 +1,36 @@
+# Airflow(airflow ns)가 seatflow ns에 배치 파드를 띄우기 위한 권한.
+# 서비스 시크릿(seat-service-secret)·ghcr-secret이 seatflow ns에 있어서 파드도 거기서 떠야 한다.
+# scheduler: LocalExecutor라 태스크가 여기서 실행됨 / triggerer: deferrable=True일 때 파드 상태 폴링
+# 적용: kubectl apply -f k8s/seatflow-pod-launcher.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: airflow-pod-launcher
+  namespace: seatflow
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["create", "get", "list", "watch", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: airflow-pod-launcher
+  namespace: seatflow
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: airflow-pod-launcher
+subjects:
+  - kind: ServiceAccount
+    name: airflow-scheduler
+    namespace: airflow
+  - kind: ServiceAccount
+    name: airflow-triggerer
+    namespace: airflow
