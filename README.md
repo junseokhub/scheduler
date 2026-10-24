@@ -7,10 +7,13 @@ Airflow DAG 저장소. 클러스터의 Airflow가 gitSync로 `main` 브랜치의
 ```
 dags/
   common/notify.py              공통 실패 알림 (디스코드 웹훅)
+  ops/                          운영 감시 DAG
+    jenkins_watch.py
   seatflow/                     seatflow 관련 DAG
     seatflow_api_batch.py
     seatflow_pod_batch.py
 k8s/                            DAG 실행에 필요한 k8s 리소스
+  jenkins-watch-reader.yaml
   seatflow-pod-launcher.yaml
 ```
 
@@ -36,6 +39,29 @@ from common.notify import discord_on_failure
 ```
 
 Variable이 없으면 알림만 건너뛰고 태스크 결과에는 영향 없다.
+
+## Jenkins 장시간 대기/실행 알림 (`jenkins_watch`)
+
+5분마다 Jenkins API를 보고, 오래 멈춰 있는 빌드를 Jenkins 알림 채널로 보낸다. 모든 잡 공통이고 같은 항목은 한 번만 알린다.
+
+- 큐 대기 10분 이상: 대기 사유 + 에이전트 파드 스케줄링 실패 사유 (`Insufficient cpu` 등)
+- 실행 30분 이상
+
+에이전트를 못 받아 멈춘 빌드는 파이프라인 코드가 실행되기 전이라 파이프라인 안에서는 알릴 수 없어서 Airflow에서 감시한다.
+
+사전 준비 (최초 1회):
+
+```bash
+kubectl apply -f k8s/jenkins-watch-reader.yaml   # jenkins ns 파드·이벤트 조회 권한
+
+# Jenkins UI → 사용자 → Security → API Token 발급 후
+kubectl -n airflow exec -it airflow-scheduler-0 -c scheduler -- \
+  airflow connections add jenkins_api --conn-type http \
+  --conn-host jenkins.jenkins.svc.cluster.local --conn-port 9090 \
+  --conn-login <사용자> --conn-password <API 토큰>
+```
+
+Variable `jenkins_discord_webhook_url`에 Jenkins 알림 채널 웹훅을 넣고 UI에서 토글 ON. 기준 시간은 Trigger 때 `wait_minutes`, `run_minutes`로 바꿔 볼 수 있다.
 
 ## 배치 방식 고르기
 

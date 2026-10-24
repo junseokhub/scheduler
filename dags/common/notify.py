@@ -35,6 +35,10 @@ def discord_on_failure(context):
         f"원인:\n```{reason}```\n"
         f"로그: {ti.log_url}"
     )
+    post_discord(url, content)
+
+
+def post_discord(url, content):
     req = urllib.request.Request(
         url,
         data=json.dumps({"content": content}).encode(),

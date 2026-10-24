@@ -1,0 +1,26 @@
+# jenkins_watch DAG가 Jenkins 에이전트 파드의 스케줄링 실패 사유(이벤트)를 읽기 위한 권한.
+# LocalExecutor라 태스크는 airflow-scheduler SA로 실행된다.
+# 적용: kubectl apply -f k8s/jenkins-watch-reader.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: airflow-jenkins-watch
+  namespace: jenkins
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "events"]
+    verbs: ["list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: airflow-jenkins-watch
+  namespace: jenkins
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: airflow-jenkins-watch
+subjects:
+  - kind: ServiceAccount
+    name: airflow-scheduler
+    namespace: airflow
