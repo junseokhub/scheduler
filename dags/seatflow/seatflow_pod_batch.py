@@ -24,6 +24,9 @@ common = dict(
     node_selector={"kubernetes.io/arch": "arm64"},
     get_logs=True,
     on_finish_action="delete_pod",
+    # 실패 시 컨테이너 마지막 로그를 에러 메시지로 → 디스코드 알림에 실패 원인이 들어감
+    termination_message_policy="FallbackToLogsOnError",
+    log_pod_spec_on_failure=False,  # 에러 메시지에 파드 스펙 전체 덤프를 붙이지 않음
 )
 
 
