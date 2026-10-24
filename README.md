@@ -15,3 +15,10 @@ Airflow DAG 저장소. 클러스터의 Airflow가 gitSync로 `main` 브랜치의
 | `example_java_pod.py` | KubernetesPodOperator로 Java 컨테이너 실행 |
 | `example_style_classic.py` | 전통 방식 (with DAG + Operator + `>>`) |
 | `example_style_taskflow.py` | 코드 방식 (TaskFlow `@dag` / `@task`) — classic과 같은 동작 |
+
+## seatflow (`dags/seatflow/`)
+
+| 파일 | 내용 |
+|---|---|
+| `seatflow_api_batch.py` | API 방식 — 떠 있는 seat-service에 HttpOperator로 호출 (Connection `seatflow_seat` 필요) |
+| `seatflow_pod_batch.py` | 파드 방식 — seat-service 이미지를 배치 파드로 실행 후 종료, deferrable (`k8s/seatflow-pod-launcher.yaml` 적용 필요) |
