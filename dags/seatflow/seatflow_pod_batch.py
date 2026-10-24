@@ -13,6 +13,8 @@ from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperato
 from airflow.sdk import Param, dag
 from kubernetes.client import models as k8s
 
+from common.notify import discord_on_failure
+
 IMAGE = "ghcr.io/junseokhub/seatflow-seat-service:{{ params.image_tag }}"
 
 common = dict(
@@ -32,6 +34,7 @@ common = dict(
     catchup=False,
     params={"image_tag": Param("20cb199", type="string")},
     tags=["seatflow"],
+    default_args={"on_failure_callback": discord_on_failure},
 )
 def seatflow_pod_batch():
     # 권한·이미지 pull 확인용. 자바 안 띄우고 문자열만 찍고 끝남 (지금 이미지로도 동작)

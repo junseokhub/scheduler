@@ -13,6 +13,8 @@ import pendulum
 from airflow.providers.http.operators.http import HttpOperator
 from airflow.sdk import dag
 
+from common.notify import discord_on_failure
+
 
 @dag(
     dag_id="seatflow_api_batch",
@@ -20,6 +22,7 @@ from airflow.sdk import dag
     start_date=pendulum.datetime(2026, 1, 1, tz="Asia/Seoul"),
     catchup=False,
     tags=["seatflow"],
+    default_args={"on_failure_callback": discord_on_failure},
 )
 def seatflow_api_batch():
     HttpOperator(
