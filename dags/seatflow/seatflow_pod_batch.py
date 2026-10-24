@@ -35,7 +35,7 @@ common = dict(
     schedule=None,
     start_date=pendulum.datetime(2026, 1, 1, tz="Asia/Seoul"),
     catchup=False,
-    params={"image_tag": Param("20cb199", type="string")},
+    params={"image_tag": Param("1378c4f", type="string")},
     tags=["seatflow"],
     default_args={"on_failure_callback": discord_on_failure},
 )
@@ -62,7 +62,8 @@ def seatflow_pod_batch():
         ],
         env_from=[k8s.V1EnvFromSource(secret_ref=k8s.V1SecretEnvSource(name="seat-service-secret"))],
         container_resources=k8s.V1ResourceRequirements(
-            requests={"cpu": "100m", "memory": "384Mi"},
+            # arm64 워커는 CPU requests 여유가 100m 미만 → requests만 낮게 (실행은 limits까지 사용)
+            requests={"cpu": "50m", "memory": "384Mi"},
             limits={"cpu": "1", "memory": "768Mi"},
         ),
         active_deadline_seconds=1800,  # 30분 넘으면 강제 종료. 장시간 배치는 잡별로 늘린다
